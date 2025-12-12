@@ -11,7 +11,10 @@ import {
   FaGithub,
   FaTwitter,
   FaPhone,
-  FaMapMarkerAlt
+  FaMapMarkerAlt,
+  FaImages,
+  FaVideo,
+  FaCamera
 } from 'react-icons/fa';
 
 const Navbar = ({ activeSection, setActiveSection, portfolioData }) => {
@@ -39,6 +42,7 @@ const Navbar = ({ activeSection, setActiveSection, portfolioData }) => {
     { id: 'about', label: 'About', icon: '👨‍💻' },
     { id: 'projects', label: 'Projects', icon: '🚀' },
     { id: 'experience', label: 'Experience', icon: '📈' },
+    { id: 'gallery', label: 'Gallery', icon: '🖼️' }, // Added Gallery
   ];
 
   const handleNavClick = (sectionId) => {
@@ -80,6 +84,12 @@ const Navbar = ({ activeSection, setActiveSection, portfolioData }) => {
     { icon: <FaLinkedin />, href: "#", color: "hover:bg-blue-600" },
     { icon: <FaTwitter />, href: "#", color: "hover:bg-blue-400" },
   ];
+
+  // Gallery stats from portfolioData
+  const galleryStats = {
+    totalPhotos: portfolioData.gallery?.profilePhotos?.length || 0,
+    totalVideos: portfolioData.videos?.projectDemos?.length || 0
+  };
 
   return (
     <>
@@ -123,39 +133,57 @@ const Navbar = ({ activeSection, setActiveSection, portfolioData }) => {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-1">
-            {navItems.map((item, index) => (
-              <motion.button
-                key={item.id}
-                onClick={() => handleNavClick(item.id)}
-                className={`relative px-6 py-3 rounded-xl font-medium transition-all duration-300 group ${
-                  activeSection === item.id 
-                    ? 'text-blue-600 bg-blue-50' 
-                    : 'text-gray-600 hover:text-blue-500 hover:bg-gray-50'
-                }`}
-                whileHover={{ y: -2 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <span className="flex items-center space-x-2">
-                  <span className="text-sm">{item.icon}</span>
-                  <span>{item.label}</span>
-                </span>
-                
-                {activeSection === item.id && (
+            {navItems.map((item, index) => {
+              // Special styling for Gallery
+              const isGallery = item.id === 'gallery';
+              
+              return (
+                <motion.button
+                  key={item.id}
+                  onClick={() => handleNavClick(item.id)}
+                  className={`relative px-6 py-3 rounded-xl font-medium transition-all duration-300 group ${
+                    activeSection === item.id 
+                      ? isGallery 
+                        ? 'text-pink-600 bg-pink-50' 
+                        : 'text-blue-600 bg-blue-50'
+                      : 'text-gray-600 hover:text-blue-500 hover:bg-gray-50'
+                  }`}
+                  whileHover={{ y: -2 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <span className="flex items-center space-x-2">
+                    <span className="text-sm">{item.icon}</span>
+                    <span>{item.label}</span>
+                    
+                    {/* Gallery badge */}
+                    {isGallery && galleryStats.totalPhotos > 0 && (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gradient-to-r from-pink-500 to-rose-500 text-white ml-2">
+                        {galleryStats.totalPhotos}+
+                      </span>
+                    )}
+                  </span>
+                  
+                  {activeSection === item.id && (
+                    <motion.div
+                      layoutId="navbar-indicator"
+                      className={`absolute inset-0 border-2 rounded-xl ${
+                        isGallery ? 'border-pink-200' : 'border-blue-200'
+                      }`}
+                      initial={false}
+                      transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                    />
+                  )}
+                  
                   <motion.div
-                    layoutId="navbar-indicator"
-                    className="absolute inset-0 border-2 border-blue-200 rounded-xl"
+                    className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 w-1 h-1 rounded-full opacity-0 group-hover:opacity-100 ${
+                      isGallery ? 'bg-pink-500' : 'bg-blue-500'
+                    }`}
                     initial={false}
-                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                    whileHover={{ scale: 2 }}
                   />
-                )}
-                
-                <motion.div
-                  className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-blue-500 rounded-full opacity-0 group-hover:opacity-100"
-                  initial={false}
-                  whileHover={{ scale: 2 }}
-                />
-              </motion.button>
-            ))}
+                </motion.button>
+              );
+            })}
             
             {/* Contact Button */}
             <motion.button
@@ -197,21 +225,41 @@ const Navbar = ({ activeSection, setActiveSection, portfolioData }) => {
             >
               <div className="container mx-auto px-4 py-4">
                 <div className="space-y-2">
-                  {navItems.map((item) => (
-                    <motion.button
-                      key={item.id}
-                      onClick={() => handleNavClick(item.id)}
-                      className={`w-full text-left py-4 px-4 rounded-xl transition-all duration-300 flex items-center space-x-3 ${
-                        activeSection === item.id 
-                          ? 'bg-gradient-to-r from-blue-50 to-purple-50 text-blue-600 font-semibold border border-blue-100' 
-                          : 'text-gray-600 hover:bg-gray-50'
-                      }`}
-                      whileHover={{ x: 5 }}
-                    >
-                      <span className="text-lg">{item.icon}</span>
-                      <span className="font-medium">{item.label}</span>
-                    </motion.button>
-                  ))}
+                  {navItems.map((item) => {
+                    const isGallery = item.id === 'gallery';
+                    
+                    return (
+                      <motion.button
+                        key={item.id}
+                        onClick={() => handleNavClick(item.id)}
+                        className={`w-full text-left py-4 px-4 rounded-xl transition-all duration-300 flex items-center justify-between ${
+                          activeSection === item.id 
+                            ? isGallery
+                              ? 'bg-gradient-to-r from-pink-50 to-rose-50 text-pink-600 font-semibold border border-pink-100'
+                              : 'bg-gradient-to-r from-blue-50 to-purple-50 text-blue-600 font-semibold border border-blue-100' 
+                            : 'text-gray-600 hover:bg-gray-50'
+                        }`}
+                        whileHover={{ x: 5 }}
+                      >
+                        <div className="flex items-center space-x-3">
+                          <span className="text-lg">{item.icon}</span>
+                          <span className="font-medium">{item.label}</span>
+                        </div>
+                        
+                        {/* Gallery stats in mobile */}
+                        {isGallery && galleryStats.totalPhotos > 0 && (
+                          <div className="flex items-center space-x-2">
+                            <span className="text-xs text-gray-500">
+                              <FaCamera className="inline mr-1" /> {galleryStats.totalPhotos}
+                            </span>
+                            <span className="text-xs text-gray-500">
+                              <FaVideo className="inline mr-1" /> {galleryStats.totalVideos}
+                            </span>
+                          </div>
+                        )}
+                      </motion.button>
+                    );
+                  })}
                   
                   <motion.button
                     onClick={handleContactClick}
@@ -282,6 +330,30 @@ const Navbar = ({ activeSection, setActiveSection, portfolioData }) => {
                             <p className="font-semibold">{portfolioData.user.location}</p>
                           </div>
                         </div>
+                        
+                        {/* Gallery Info */}
+                        {portfolioData.gallery && (
+                          <div className="flex items-center space-x-4 p-3 bg-white/10 rounded-2xl backdrop-blur-sm">
+                            <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                              <FaImages className="text-white text-lg" />
+                            </div>
+                            <div>
+                              <p className="text-blue-200 text-sm">Gallery</p>
+                              <p className="font-semibold">
+                                {galleryStats.totalPhotos} Photos • {galleryStats.totalVideos} Videos
+                              </p>
+                              <button 
+                                onClick={() => {
+                                  setIsContactOpen(false);
+                                  setActiveSection('gallery');
+                                }}
+                                className="text-blue-300 text-sm hover:text-white transition-colors mt-1"
+                              >
+                                View Gallery →
+                              </button>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                     

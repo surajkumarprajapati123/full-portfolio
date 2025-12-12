@@ -1,5 +1,6 @@
-// components/Home.js - UPDATED
+// components/Home.js - FIXED VERSION
 import React, { useState, useEffect, useRef } from 'react';
+import { Canvas } from '@react-three/fiber';
 import { motion, AnimatePresence, useScroll, useTransform, useSpring } from 'framer-motion';
 import { 
   FaGithub, 
@@ -20,16 +21,15 @@ import {
   FaStackOverflow,
   FaPhone,
   FaMapMarkerAlt,
-  FaEnvelope
+  FaEnvelope,
+  FaRegGem,
+  FaFire,
+  FaCrown,
+  FaBolt
 } from 'react-icons/fa';
-import { SiTypescript, SiJavascript, SiReact, SiNodedotjs, SiPython, SiFramer, SiThreedotjs, SiNextdotjs, SiVuedotjs, SiGraphql, SiDocker } from 'react-icons/si';
 
-// Three.js components remain the same
-import ThreeScene from './ThreeScene';
-import FloatingParticles from './FloatingParticles';
-import AnimatedSphere from './AnimatedSphere';
-import InteractiveParticles from './InteractiveCube';
-import TechOrbit from './TechOrbit';
+// Three.js components - These MUST be used inside Canvas
+import GlowingOrbs from './GlowingOrbs';
 
 const Home = ({ portfolioData, setActiveSection }) => {
   const [currentTestimonial, setCurrentTestimonial] = useState(0);
@@ -37,6 +37,8 @@ const Home = ({ portfolioData, setActiveSection }) => {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [imageLoaded, setImageLoaded] = useState(false);
   const [threeLoaded, setThreeLoaded] = useState(false);
+  const [scrollProgress, setScrollProgress] = useState(0);
+  
   const containerRef = useRef(null);
   const heroRef = useRef(null);
 
@@ -52,172 +54,79 @@ const Home = ({ portfolioData, setActiveSection }) => {
 
   useEffect(() => {
     setIsVisible(true);
+    
+    // Testimonial carousel
     const interval = setInterval(() => {
-      if (portfolioData.testimonials) {
+      if (portfolioData.testimonials?.length > 0) {
         setCurrentTestimonial((prev) => (prev + 1) % portfolioData.testimonials.length);
       }
     }, 5000);
     
+    // Mouse parallax
     const handleMouseMove = (e) => {
       setMousePosition({
-        x: (e.clientX / window.innerWidth - 0.5) * 50,
-        y: (e.clientY / window.innerHeight - 0.5) * 50
+        x: (e.clientX / window.innerWidth - 0.5) * 100,
+        y: (e.clientY / window.innerHeight - 0.5) * 100
       });
     };
 
+    // Scroll progress
+    const handleScroll = () => {
+      const scrollTop = window.pageYOffset;
+      const docHeight = document.body.offsetHeight;
+      const winHeight = window.innerHeight;
+      const scrolled = (scrollTop / (docHeight - winHeight)) * 100;
+      setScrollProgress(scrolled);
+    };
+
     window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('scroll', handleScroll);
     
-    setTimeout(() => setThreeLoaded(true), 1000);
+    setTimeout(() => setThreeLoaded(true), 1500);
     
     return () => {
       clearInterval(interval);
       window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('scroll', handleScroll);
     };
   }, [portfolioData.testimonials]);
 
-  const handleImageLoad = () => {
-    setImageLoaded(true);
-  };
-
-  // Use actual testimonials from portfolioData
-  const testimonials = portfolioData.testimonials || [
-    {
-      text: "Exceptional work! Delivered beyond expectations with incredible attention to detail.",
-      author: "Sarah Johnson",
-      role: "Product Manager at TechCorp",
-      avatar: "👩‍💼"
-    }
-  ];
-
-  // Enhanced stats using actual data
+  // Stats
   const stats = [
-    { number: `${portfolioData.projects?.length || 6}+`, label: "Projects Completed", icon: <FaRocket />, color: "from-cyan-500 to-blue-500" },
-    { number: "5+", label: "Years Experience", icon: <FaCode />, color: "from-green-500 to-emerald-500" },
-    { number: "98%", label: "Client Satisfaction", icon: <FaStar />, color: "from-yellow-500 to-orange-500" },
-    { number: `${portfolioData.techStack?.languages?.length || 25}+`, label: "Technologies", icon: <FaPaintBrush />, color: "from-purple-500 to-pink-500" }
-  ];
-
-  // Enhanced services with actual data
-  const services = [
-    {
-      icon: <FaCode className="text-4xl" />,
-      title: "Web Development",
-      description: "Modern, responsive websites built with cutting-edge technologies",
-      gradient: "from-blue-500 to-cyan-500",
-      features: portfolioData.techStack?.frontend?.slice(0, 3) || ["React/Next.js", "TypeScript", "Tailwind CSS"],
-      threeModel: "cube"
+    { 
+      number: `${portfolioData.projects?.length || 8}+`, 
+      label: "Projects Completed", 
+      icon: <FaRocket />, 
+      color: "from-cyan-500 to-blue-500",
     },
-    {
-      icon: <FaMobile className="text-4xl" />,
-      title: "Mobile Apps",
-      description: "Cross-platform mobile applications for iOS and Android",
-      gradient: "from-green-500 to-emerald-500",
-      features: portfolioData.projects?.filter(p => p.category === "Mobile").map(p => p.technologies[0]) || ["React Native", "Flutter", "Native Performance"],
-      threeModel: "sphere"
+    { 
+      number: `${portfolioData.experience?.length || 5}+`, 
+      label: "Years Experience", 
+      icon: <FaCode />, 
+      color: "from-green-500 to-emerald-500",
     },
-    {
-      icon: <FaServer className="text-4xl" />,
-      title: "Backend Solutions",
-      description: "Scalable server architecture and API development",
-      gradient: "from-purple-500 to-pink-500",
-      features: portfolioData.techStack?.backend?.slice(0, 3) || ["Node.js", "Python", "Cloud Functions"],
-      threeModel: "torus"
+    { 
+      number: "98%", 
+      label: "Client Satisfaction", 
+      icon: <FaStar />, 
+      color: "from-yellow-500 to-orange-500",
     },
-    {
-      icon: <FaCloud className="text-4xl" />,
-      title: "Cloud Services",
-      description: "Deployment and management on cloud platforms",
-      gradient: "from-orange-500 to-red-500",
-      features: portfolioData.techStack?.cloudDevOps?.slice(0, 3) || ["AWS", "Google Cloud", "Azure"],
-      threeModel: "cone"
+    { 
+      number: "30+", 
+      label: "Technologies", 
+      icon: <FaPaintBrush />, 
+      color: "from-purple-500 to-pink-500",
     }
   ];
 
-  // Enhanced technologies with actual data
-  const technologies = portfolioData.techProficiency?.expert?.slice(0, 6).map(tech => {
-    const getIcon = (name) => {
-      const icons = {
-        'React': <SiReact className="text-5xl" />,
-        'JavaScript': <SiJavascript className="text-5xl" />,
-        'TypeScript': <SiTypescript className="text-5xl" />,
-        'Node.js': <SiNodedotjs className="text-5xl" />,
-        'Python': <SiPython className="text-5xl" />,
-        'Next.js': <SiNextdotjs className="text-5xl" />,
-        'Vue.js': <SiVuedotjs className="text-5xl" />,
-        'GraphQL': <SiGraphql className="text-5xl" />,
-        'Docker': <SiDocker className="text-5xl" />,
-        // 'AWS': <SiAmazonaws className="text-5xl" />,
-      };
-      return icons[name] || <FaCode className="text-5xl" />;
-    };
-
-    const getColor = (name) => {
-      const colors = {
-        'React': "text-cyan-400",
-        'JavaScript': "text-yellow-400",
-        'TypeScript': "text-blue-500",
-        'Node.js': "text-green-500",
-        'Python': "text-yellow-500",
-        'Next.js': "text-gray-800",
-        'Vue.js': "text-green-400",
-        'GraphQL': "text-pink-500",
-        'Docker': "text-blue-400",
-        'AWS': "text-orange-500",
-      };
-      return colors[name] || "text-purple-500";
-    };
-
-    const getLevel = (name) => {
-      const proficiency = portfolioData.techProficiency;
-      if (proficiency.expert?.includes(name)) return 95;
-      if (proficiency.advanced?.includes(name)) return 85;
-      if (proficiency.intermediate?.includes(name)) return 75;
-      if (proficiency.familiar?.includes(name)) return 65;
-      return 80;
-    };
-
-    return {
-      icon: getIcon(tech),
-      name: tech,
-      level: getLevel(tech),
-      color: getColor(tech),
-      threeColor: "#61DAFB"
-    };
-  }) || [
-    { icon: <SiReact className="text-5xl" />, name: "React", level: 95, color: "text-cyan-400", threeColor: "#61DAFB" },
-    { icon: <SiJavascript className="text-5xl" />, name: "JavaScript", level: 90, color: "text-yellow-400", threeColor: "#F7DF1E" },
-    { icon: <SiTypescript className="text-5xl" />, name: "TypeScript", level: 85, color: "text-blue-500", threeColor: "#3178C6" },
-    { icon: <SiNodedotjs className="text-5xl" />, name: "Node.js", level: 88, color: "text-green-500", threeColor: "#339933" },
-    { icon: <SiPython className="text-5xl" />, name: "Python", level: 82, color: "text-yellow-500", threeColor: "#3776AB" },
-    { icon: <SiThreedotjs className="text-5xl" />, name: "Three.js", level: 80, color: "text-purple-500", threeColor: "#000000" }
+  // Social Links
+  const socialLinks = [
+    { icon: <FaGithub />, href: portfolioData.user.social?.github || "#", label: "GitHub" },
+    { icon: <FaLinkedin />, href: portfolioData.user.social?.linkedin || "#", label: "LinkedIn" },
+    { icon: <FaTwitter />, href: portfolioData.user.social?.twitter || "#", label: "Twitter" },
+    { icon: <FaDribbble />, href: portfolioData.user.social?.dribbble || "#", label: "Dribbble" },
+    { icon: <FaCodepen />, href: portfolioData.user.social?.codepen || "#", label: "CodePen" },
   ];
-
-  const floatingVariants = {
-    floating: {
-      y: [-10, 10, -10],
-      transition: {
-        duration: 4,
-        repeat: Infinity,
-        ease: "easeInOut"
-      }
-    },
-    floatingSlow: {
-      y: [-15, 15, -15],
-      transition: {
-        duration: 6,
-        repeat: Infinity,
-        ease: "easeInOut"
-      }
-    },
-    floatingFast: {
-      y: [-8, 8, -8],
-      transition: {
-        duration: 3,
-        repeat: Infinity,
-        ease: "easeInOut"
-      }
-    }
-  };
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -231,7 +140,7 @@ const Home = ({ portfolioData, setActiveSection }) => {
   };
 
   const itemVariants = {
-    hidden: { y: 50, opacity: 0, scale: 0.8 },
+    hidden: { y: 60, opacity: 0, scale: 0.8 },
     visible: {
       y: 0,
       opacity: 1,
@@ -243,41 +152,43 @@ const Home = ({ portfolioData, setActiveSection }) => {
     }
   };
 
-  // Social media links from portfolioData
-  const socialLinks = [
-    { icon: <FaGithub />, href: portfolioData.user.social?.github || "#", color: "hover:bg-gray-800" },
-    { icon: <FaLinkedin />, href: portfolioData.user.social?.linkedin || "#", color: "hover:bg-blue-600" },
-    { icon: <FaTwitter />, href: portfolioData.user.social?.twitter || "#", color: "hover:bg-blue-400" },
-    { icon: <FaDribbble />, href: portfolioData.user.social?.dribbble || "#", color: "hover:bg-pink-600" },
-    { icon: <FaCodepen />, href: portfolioData.user.social?.codepen || "#", color: "hover:bg-gray-700" },
-  ];
-
   return (
     <div 
       ref={containerRef}
       className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 overflow-hidden relative"
     >
-      {/* Three.js Background Scene */}
-      <div className="fixed inset-0 z-0">
-        <ThreeScene 
-          mousePosition={mousePosition}
-          scrollProgress={scrollYProgress}
-          onLoaded={() => setThreeLoaded(true)}
-        />
-      </div>
-
-      {/* Floating Interactive Particles */}
-      <div className="fixed inset-0 z-10 pointer-events-none">
-        <InteractiveParticles 
-          count={50}
-          mousePosition={mousePosition}
-        />
+      {/* FIXED: Three.js Background wrapped in Canvas */}
+      <div className="fixed inset-0 z-0 pointer-events-none">
+        <Canvas
+          camera={{ position: [0, 0, 30], fov: 75 }}
+          gl={{ 
+            antialias: true,
+            alpha: true,
+            powerPreference: "high-performance"
+          }}
+          dpr={[1, 2]}
+        >
+          <ambientLight intensity={0.5} />
+          <pointLight position={[10, 10, 10]} intensity={1} />
+          <pointLight position={[-10, -10, -10]} intensity={0.5} />
+          
+          {/* Your GlowingOrbs component */}
+          <GlowingOrbs 
+            count={25}
+            radius={15}
+            colors={['#3B82F6', '#8B5CF6', '#EC4899', '#06B6D4', '#10B981']}
+            speed={0.5}
+            size={0.15}
+            opacity={0.6}
+          />
+        </Canvas>
       </div>
 
       {/* Hero Section */}
       <section ref={heroRef} className="min-h-screen flex items-center pt-16 relative z-20">
         <div className="container mx-auto px-4 py-12 relative z-20">
           <div className="flex flex-col lg:flex-row items-center justify-between gap-12">
+            
             {/* Left Content */}
             <motion.div 
               className="lg:w-1/2"
@@ -285,112 +196,136 @@ const Home = ({ portfolioData, setActiveSection }) => {
               initial="hidden"
               animate="visible"
             >
+              {/* Status Badge */}
               <motion.div
-                className="inline-flex items-center px-6 py-3 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 mb-8"
+                className="inline-flex items-center px-6 py-3 bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 mb-8 shadow-2xl"
                 variants={itemVariants}
+                whileHover={{ scale: 1.05, y: -2 }}
               >
                 <motion.div
                   className="w-3 h-3 bg-gradient-to-r from-green-400 to-cyan-400 rounded-full mr-3"
-                  animate={{ scale: [1, 1.2, 1] }}
+                  animate={{ 
+                    scale: [1, 1.4, 1],
+                    boxShadow: ["0 0 0px #10B981", "0 0 10px #10B981", "0 0 0px #10B981"]
+                  }}
                   transition={{ duration: 2, repeat: Infinity }}
                 />
-                <span className="text-white/80 font-medium">
+                <span className="text-white/90 font-semibold text-lg">
                   {portfolioData.user.availability || "Available for new projects"}
                 </span>
-                <motion.div
-                  className="ml-4 flex space-x-1"
-                  animate={{ x: [0, 5, 0] }}
-                  transition={{ duration: 1.5, repeat: Infinity }}
-                >
-                  <div className="w-1 h-1 bg-white/60 rounded-full" />
-                  <div className="w-1 h-1 bg-white/60 rounded-full" />
-                  <div className="w-1 h-1 bg-white/60 rounded-full" />
-                </motion.div>
               </motion.div>
 
-              <motion.h1 
-                className="text-6xl lg:text-8xl font-black text-white mb-6 leading-tight"
+              {/* Title */}
+              <motion.div 
+                className="mb-6"
                 variants={itemVariants}
               >
-                <span className="block">Hi, I'm</span>
-                <span className="bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-500 bg-clip-text text-transparent">
-                  {portfolioData.user.name.split(' ')[0]}
-                </span>
-              </motion.h1>
-              
-              <motion.h2 
-                className="text-2xl lg:text-3xl text-white/60 mb-8 font-light"
-                variants={itemVariants}
-              >
-                <span className="bg-gradient-to-r from-white/80 to-white/60 bg-clip-text text-transparent">
+                <h1 className="text-6xl lg:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-500 mb-2 leading-tight">
+                  Hi, I'm {portfolioData.user.name.split(' ')[0]}
+                </h1>
+                <motion.h2 
+                  className="text-2xl lg:text-3xl text-white/70 font-light"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.5 }}
+                >
                   {portfolioData.user.title}
-                </span>
-              </motion.h2>
+                </motion.h2>
+              </motion.div>
               
-              <motion.p 
-                className="text-xl text-white/70 mb-8 max-w-2xl leading-relaxed"
+              {/* Bio */}
+              <motion.div 
+                className="mb-8 relative"
                 variants={itemVariants}
               >
-                {portfolioData.user.bio} I create immersive digital experiences using cutting-edge WebGL and 3D technologies.
-              </motion.p>
+                <p className="text-xl text-white/70 leading-relaxed max-w-2xl">
+                  {portfolioData.user.bio}
+                </p>
+                
+                <motion.div
+                  className="h-1 bg-gradient-to-r from-cyan-500 to-purple-500 rounded-full mt-4"
+                  initial={{ width: 0 }}
+                  animate={{ width: "100%" }}
+                  transition={{ delay: 0.8, duration: 1 }}
+                />
+              </motion.div>
 
               {/* Contact Info */}
               <motion.div 
-                className="flex flex-wrap gap-4 mb-8"
+                className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8"
                 variants={itemVariants}
               >
-                <div className="flex items-center space-x-2 text-white/70">
-                  <FaMapMarkerAlt className="text-cyan-400" />
-                  <span>{portfolioData.user.location}</span>
-                </div>
-                <div className="flex items-center space-x-2 text-white/70">
-                  <FaEnvelope className="text-purple-400" />
-                  <span>{portfolioData.user.email}</span>
-                </div>
-                {portfolioData.user.contact?.phone && (
-                  <div className="flex items-center space-x-2 text-white/70">
-                    <FaPhone className="text-green-400" />
-                    <span>{portfolioData.user.contact.phone}</span>
+                <motion.div 
+                  className="bg-white/5 backdrop-blur-md rounded-2xl p-4 border border-white/10 hover:border-cyan-500/30 transition-all duration-300"
+                  whileHover={{ y: -5, scale: 1.02 }}
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-cyan-500/20 rounded-lg">
+                      <FaMapMarkerAlt className="text-cyan-400 text-xl" />
+                    </div>
+                    <div>
+                      <p className="text-white/60 text-sm">Location</p>
+                      <p className="text-white font-medium">{portfolioData.user.location}</p>
+                    </div>
                   </div>
-                )}
+                </motion.div>
+
+                <motion.div 
+                  className="bg-white/5 backdrop-blur-md rounded-2xl p-4 border border-white/10 hover:border-purple-500/30 transition-all duration-300"
+                  whileHover={{ y: -5, scale: 1.02 }}
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-purple-500/20 rounded-lg">
+                      <FaEnvelope className="text-purple-400 text-xl" />
+                    </div>
+                    <div>
+                      <p className="text-white/60 text-sm">Email</p>
+                      <p className="text-white font-medium">{portfolioData.user.email}</p>
+                    </div>
+                  </div>
+                </motion.div>
               </motion.div>
               
+              {/* CTA Buttons */}
               <motion.div 
-                className="flex flex-wrap gap-6 mb-8"
+                className="flex flex-wrap gap-4 mb-8"
                 variants={itemVariants}
               >
                 <motion.button
                   whileHover={{ 
                     scale: 1.05, 
                     y: -2,
-                    background: "linear-gradient(45deg, #3B82F6, #8B5CF6)"
+                    boxShadow: "0 20px 40px rgba(6,182,212,0.4)"
                   }}
                   whileTap={{ scale: 0.95 }}
-                  className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-10 py-5 rounded-2xl font-bold text-lg shadow-2xl hover:shadow-3xl transition-all duration-300 flex items-center group relative overflow-hidden"
+                  className="bg-gradient-to-r from-cyan-500 to-blue-600 text-white px-8 py-4 rounded-2xl font-bold text-lg shadow-2xl relative overflow-hidden group"
                   onClick={() => setActiveSection('projects')}
                 >
                   <span className="relative z-10 flex items-center">
                     Explore Projects 
                     <FaArrowRight className="ml-3 group-hover:translate-x-2 transition-transform duration-300" />
                   </span>
-                  <motion.div
-                    className="absolute inset-0 bg-gradient-to-r from-purple-600 to-blue-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                    whileHover={{ scale: 1.1 }}
-                  />
                 </motion.button>
                 
                 <motion.button
-                  whileHover={{ scale: 1.05, y: -2 }}
+                  whileHover={{ 
+                    scale: 1.05, 
+                    y: -2,
+                    boxShadow: "0 20px 40px rgba(139,92,246,0.3)"
+                  }}
                   whileTap={{ scale: 0.95 }}
-                  className="bg-white/10 backdrop-blur-md text-white px-10 py-5 rounded-2xl font-bold text-lg border border-white/20 hover:bg-white/20 transition-all duration-300"
+                  className="bg-white/10 backdrop-blur-md text-white px-8 py-4 rounded-2xl font-bold text-lg border border-white/20 hover:bg-white/20 transition-all duration-300"
                   onClick={() => setActiveSection('experience')}
                 >
-                  View Experience
+                  <span className="flex items-center">
+                    View Experience
+                  </span>
                 </motion.button>
               </motion.div>
               
+              {/* Social Links */}
               <motion.div 
-                className="flex space-x-4 flex-wrap"
+                className="flex flex-wrap gap-3"
                 variants={itemVariants}
               >
                 {socialLinks.map((social, index) => (
@@ -399,327 +334,72 @@ const Home = ({ portfolioData, setActiveSection }) => {
                     href={social.href}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center text-white/80 hover:text-white border border-white/20 hover:border-white/40 transition-all duration-300 hover:scale-110"
-                    whileHover={{ scale: 1.1, y: -3, rotate: 5 }}
+                    className="relative group"
+                    whileHover={{ y: -5 }}
                     whileTap={{ scale: 0.95 }}
                   >
-                    {social.icon}
+                    <div className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center text-white/80 border border-white/20 group-hover:border-white/40 transition-all duration-300 text-xl">
+                      {social.icon}
+                    </div>
+                    <div className="absolute -top-10 left-1/2 transform -translate-x-1/2 px-3 py-1 bg-slate-800 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none whitespace-nowrap">
+                      <span className="text-white text-sm">{social.label}</span>
+                    </div>
                   </motion.a>
                 ))}
               </motion.div>
             </motion.div>
             
-            {/* Right Content - 3D Enhanced Avatar */}
+            {/* Right Content - Avatar/Image */}
             <motion.div 
               className="lg:w-2/5 relative"
               style={{
                 scale: springScale,
                 rotate: springRotate,
-                x: mousePosition.x * 0.3,
-                y: mousePosition.y * 0.3
               }}
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.5, duration: 0.8 }}
             >
               <div className="relative">
-                {/* 3D Avatar Container */}
-                <motion.div 
-                  className="relative w-96 h-96 mx-auto"
-                  animate={{ 
-                    y: [0, -20, 0],
-                  }}
-                  transition={{ 
-                    repeat: Infinity, 
-                    duration: 6,
-                    ease: "easeInOut"
-                  }}
-                >
-                  {/* Three.js Animated Sphere */}
-                  <div className="absolute inset-0 z-0">
-                    <AnimatedSphere 
-                      imageUrl={portfolioData.user.avatar}
-                      mousePosition={mousePosition}
-                    />
-                  </div>
-
-                  {/* Floating Tech Orbits */}
-                  <div className="absolute inset-0 z-10">
-                    <TechOrbit technologies={technologies.slice(0, 4)} />
-                  </div>
-
-                  {/* Enhanced Floating Elements */}
-                  <motion.div
-                    className="absolute -top-6 -left-6 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-2xl p-4 shadow-2xl z-20 backdrop-blur-md border border-white/20"
-                    variants={floatingVariants}
-                    animate="floating"
-                  >
-                    <div className="flex items-center space-x-3">
-                      <SiReact className="text-2xl text-white" />
-                      <span className="text-white font-bold text-sm">React Expert</span>
-                    </div>
-                  </motion.div>
-
-                  <motion.div
-                    className="absolute -bottom-6 -right-6 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl p-4 shadow-2xl z-20 backdrop-blur-md border border-white/20"
-                    variants={floatingVariants}
-                    animate="floatingSlow"
-                  >
-                    <div className="flex items-center space-x-3">
-                      <SiThreedotjs className="text-xl text-white" />
-                      <span className="text-white font-bold text-sm">3D Artist</span>
-                    </div>
-                  </motion.div>
-
-                  {/* Loading State for Three.js */}
-                  <AnimatePresence>
-                    {!threeLoaded && (
-                      <motion.div
-                        className="absolute inset-0 bg-slate-900 rounded-3xl flex items-center justify-center z-30"
-                        initial={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.5 }}
-                      >
-                        <motion.div
-                          className="w-16 h-16 border-4 border-cyan-500 border-t-transparent rounded-full"
-                          animate={{ rotate: 360 }}
-                          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                        />
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </motion.div>
+                {/* Glowing background effect */}
+                <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/20 to-purple-500/20 blur-3xl rounded-full" />
+                
+                {/* Avatar placeholder */}
+                <div className="relative z-10 w-full aspect-square rounded-full bg-gradient-to-br from-cyan-500/10 to-purple-500/10 backdrop-blur-md border border-white/20 flex items-center justify-center">
+                  <span className="text-white/40 text-6xl">👨‍💻</span>
+                </div>
               </div>
             </motion.div>
           </div>
         </div>
       </section>
 
-      {/* Stats Section - REMAINS SAME */}
+      {/* Stats Section */}
       <section className="py-20 relative z-20">
         <div className="container mx-auto px-4">
           <motion.div 
-            className="grid grid-cols-2 lg:grid-cols-4 gap-8"
+            className="grid grid-cols-2 md:grid-cols-4 gap-6"
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, margin: "-100px" }}
+            viewport={{ once: true }}
             variants={containerVariants}
           >
             {stats.map((stat, index) => (
               <motion.div
                 key={index}
-                className="relative group"
+                className="bg-white/5 backdrop-blur-md rounded-2xl p-6 border border-white/10 hover:border-white/20 transition-all duration-300"
                 variants={itemVariants}
-                whileHover={{ y: -10 }}
+                whileHover={{ y: -10, scale: 1.05 }}
               >
-                <div className="bg-white/10 backdrop-blur-md rounded-3xl p-8 border border-white/20 hover:border-white/40 transition-all duration-500 relative overflow-hidden">
-                  {/* 3D Hover Effect */}
-                  <motion.div
-                    className={`absolute inset-0 bg-gradient-to-br ${stat.color} opacity-0 group-hover:opacity-10 transition-opacity duration-500`}
-                    whileHover={{ scale: 1.1 }}
-                  />
-                  
-                  <div className="relative z-10 text-center">
-                    <motion.div
-                      className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-white/5 mb-6"
-                      whileHover={{ scale: 1.1, rotate: 5 }}
-                    >
-                      <div className={`text-3xl bg-gradient-to-r ${stat.color} bg-clip-text text-transparent`}>
-                        {stat.icon}
-                      </div>
-                    </motion.div>
-                    <motion.h3 
-                      className="text-4xl font-black text-white mb-2"
-                      whileHover={{ scale: 1.05 }}
-                    >
-                      {stat.number}
-                    </motion.h3>
-                    <p className="text-white/60 font-medium">{stat.label}</p>
-                  </div>
+                <div className={`text-4xl mb-3 bg-gradient-to-r ${stat.color} bg-clip-text text-transparent`}>
+                  {stat.icon}
                 </div>
+                <div className="text-3xl font-bold text-white mb-1">{stat.number}</div>
+                <div className="text-white/60 text-sm">{stat.label}</div>
               </motion.div>
             ))}
           </motion.div>
         </div>
-      </section>
-
-      {/* Services Section - REMAINS SAME */}
-      {/* ... (rest of the Services section code remains the same) ... */}
-
-      {/* Enhanced Technologies Section */}
-      <section className="py-20 relative z-20">
-        <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
-            className="text-center mb-20"
-          >
-            <h2 className="text-5xl lg:text-7xl font-black text-white mb-6">
-              Tech{' '}
-              <span className="bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
-                Stack
-              </span>
-            </h2>
-            <p className="text-xl text-white/60 max-w-3xl mx-auto">
-              Mastering modern technologies to build immersive, performant, and beautiful applications
-            </p>
-          </motion.div>
-
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            {technologies.map((tech, index) => (
-              <motion.div
-                key={index}
-                className="bg-white/10 backdrop-blur-md rounded-3xl p-8 border border-white/20 hover:border-white/40 transition-all duration-500 group"
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                whileHover={{ y: -10, scale: 1.02 }}
-              >
-                <div className="text-center">
-                  <motion.div
-                    className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-white/5 mb-6 group-hover:bg-white/10 transition-colors duration-300"
-                    whileHover={{ scale: 1.1, rotate: 5 }}
-                  >
-                    <div className={tech.color}>
-                      {tech.icon}
-                    </div>
-                  </motion.div>
-                  
-                  <h3 className="text-xl font-bold text-white mb-4">{tech.name}</h3>
-                  
-                  {/* Animated Skill Level Bar */}
-                  <div className="w-full bg-white/10 rounded-full h-3 mb-2 overflow-hidden">
-                    <motion.div
-                      className={`h-full bg-gradient-to-r ${tech.level > 80 ? 'from-green-400 to-cyan-400' : 'from-yellow-400 to-orange-400'} rounded-full`}
-                      initial={{ width: 0 }}
-                      whileInView={{ width: `${tech.level}%` }}
-                      viewport={{ once: true }}
-                      transition={{ duration: 1.5, delay: index * 0.1 }}
-                    />
-                  </div>
-                  
-                  <span className="text-white/60 text-sm font-medium">{tech.level}% Proficiency</span>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-
-          {/* Tech Stack Categories */}
-          {portfolioData.techStack && (
-            <motion.div
-              initial={{ opacity: 0, y: 50 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="mt-20"
-            >
-              <h3 className="text-3xl font-bold text-white text-center mb-8">Complete Tech Stack</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {Object.entries(portfolioData.techStack).map(([category, items], index) => (
-                  <motion.div
-                    key={category}
-                    className="bg-white/5 backdrop-blur-md rounded-3xl p-6 border border-white/10"
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: index * 0.1 }}
-                  >
-                    <h4 className="text-lg font-semibold text-white mb-4 capitalize">{category.replace(/([A-Z])/g, ' $1')}</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {items.slice(0, 6).map((item, i) => (
-                        <span
-                          key={i}
-                          className="px-3 py-1 bg-white/10 text-white/80 rounded-full text-sm border border-white/20"
-                        >
-                          {item}
-                        </span>
-                      ))}
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </motion.div>
-          )}
-        </div>
-      </section>
-
-      {/* Enhanced CTA Section */}
-      <section className="py-20 relative z-20">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          viewport={{ once: true, margin: "-100px" }}
-          className="container mx-auto px-4 text-center"
-        >
-          <div className="bg-gradient-to-r from-cyan-500/20 to-blue-500/20 backdrop-blur-md rounded-3xl p-12 lg:p-20 border border-cyan-400/30 relative overflow-hidden">
-            {/* 3D Particle Background */}
-            <div className="absolute inset-0 opacity-10">
-              <FloatingParticles count={30} color="#FFFFFF" />
-            </div>
-            
-            <div className="relative z-10">
-              <motion.h2 
-                className="text-5xl lg:text-7xl font-black text-white mb-6"
-                initial={{ y: 30, opacity: 0 }}
-                whileInView={{ y: 0, opacity: 1 }}
-                viewport={{ once: true }}
-              >
-                Ready to{' '}
-                <span className="bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
-                  Collaborate
-                </span>
-                ?
-              </motion.h2>
-              
-              <motion.p 
-                className="text-xl lg:text-2xl text-white/70 mb-12 max-w-3xl mx-auto leading-relaxed"
-                initial={{ y: 20, opacity: 0 }}
-                whileInView={{ y: 0, opacity: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.2 }}
-              >
-                Let's transform your vision into an extraordinary digital experience. Your next project starts here.
-              </motion.p>
-              
-              <motion.button
-                whileHover={{ 
-                  scale: 1.05, 
-                  y: -2,
-                  boxShadow: "0 20px 40px rgba(6,182,212,0.3)"
-                }}
-                whileTap={{ scale: 0.95 }}
-                className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white px-12 py-6 rounded-2xl font-bold text-xl shadow-2xl hover:shadow-3xl transition-all duration-300 relative overflow-hidden group"
-                onClick={() => window.location.href = `mailto:${portfolioData.user.email}?subject=Project%20Inquiry%20from%20Portfolio&body=Hello%20${portfolioData.user.name.split(' ')[0]}%2C%0A%0AI%20saw%20your%20portfolio%20and%20would%20like%20to%20discuss%20a%20project.%0A%0ABest%20regards%2C`}
-              >
-                <span className="relative z-10 flex items-center">
-                  Start a Project
-                  <FaRocket className="ml-3 group-hover:translate-x-2 transition-transform duration-300" />
-                </span>
-                <motion.div
-                  className="absolute inset-0 bg-gradient-to-r from-blue-500 to-cyan-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                  whileHover={{ scale: 1.1 }}
-                />
-              </motion.button>
-
-              {/* Additional Contact Info */}
-              <motion.div 
-                className="mt-8 flex flex-col sm:flex-row gap-4 justify-center text-white/60"
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.4 }}
-              >
-                <div className="flex items-center space-x-2">
-                  <FaEnvelope className="text-cyan-400" />
-                  <span>{portfolioData.user.email}</span>
-                </div>
-                {portfolioData.user.contact?.phone && (
-                  <div className="flex items-center space-x-2">
-                    <FaPhone className="text-cyan-400" />
-                    <span>{portfolioData.user.contact.phone}</span>
-                  </div>
-                )}
-              </motion.div>
-            </div>
-          </div>
-        </motion.div>
       </section>
     </div>
   );
